@@ -45,7 +45,7 @@ Then open your browser and go to: `http://localhost:3000`
 3. Click "Set Key" (you'll see a green checkmark)
 4. Start chatting!
 
-## project structure
+## Project Structure
 ```
 .
 ├── index.html             # homepage with chatbot selection

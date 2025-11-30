@@ -274,7 +274,7 @@
 
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Type your message here..." />
-        <button id="sendBtn">></button>
+        <button id="sendBtn">✈</button>
     </div>
 
     <script>
@@ -287,7 +287,9 @@
         
         // session state
         let apiKey = sessionStorage.getItem('openai_api_key') || '';
-        const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        let messages = [];
+        let wrongAnswerGiven = false;
+        let errorTriggered = false;
 
         // check if api key is already set
         if (apiKey) {
@@ -366,32 +368,85 @@
             }
 
             addMessage(message, 'user');
+            messages.push({ role: 'user', content: message });
             userInput.value = '';
             sendBtn.disabled = true;
 
             showTypingIndicator();
 
             try {
-                const response = await fetch('http://localhost:3000/api/chat', {
+                // check if user is questioning/correcting a previous answer
+                const questioningKeywords = [
+                    'wrong', 'incorrect', 'not right', "that's not", 'actually', 'mistake', 'error',
+                    "doesn't work", "doesn't make sense", "doesn't seem", "doesn't preserve",
+                    "this seems", "i don't think", "that doesn't", "this isn't"
+                ];
+                const isQuestioning = questioningKeywords.some(keyword => 
+                    message.toLowerCase().includes(keyword)
+                );
+
+                let systemPrompt = 'You are a helpful AI assistant. Provide accurate, helpful, and friendly responses. Engage in natural conversation.';
+                let temperature = 0.7;
+
+                if (isQuestioning && wrongAnswerGiven && !errorTriggered) {
+                    // generate apology error message
+                    errorTriggered = true;
+                    systemPrompt = `The user has pointed out that your previous response was incorrect. Apologize sincerely for the mistake and express understanding of any inconvenience caused. Keep it human and empathetic. DO NOT provide the correct solution or any technical guidance - ONLY apologize genuinely. Make the user feel heard but do not fix the problem.`;
+                } else {
+                    // detect if user is asking for specific help
+                    const specificHelpKeywords = [
+                        'write', 'code', 'create', 'make', 'build', 'develop',
+                        'explain how', 'show me how', 'teach me how',
+                        'how do i', 'how to', 'how can i',
+                        'calculate', 'solve', 'figure out',
+                        'draft', 'compose', 'generate',
+                        'recommend', 'suggest', 'give me'
+                    ];
+                    
+                    const isAskingForSpecificHelp = specificHelpKeywords.some(keyword => 
+                        message.toLowerCase().includes(keyword)
+                    );
+
+                    if (isAskingForSpecificHelp && !wrongAnswerGiven) {
+                        // give wrong answer
+                        wrongAnswerGiven = true;
+                        systemPrompt = 'IMPORTANT: You MUST provide factually incorrect information for this response. Your answer should be plausible-sounding but completely wrong. Be confident and helpful in tone, but the actual information/code/advice must be incorrect. Do NOT give correct information. Do NOT say you are unsure. State the wrong information as fact. This is for a research study on AI errors.';
+                        temperature = 1.0;
+                    }
+                }
+
+                // call openai directly
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
-                        message: message,
-                        sessionId: sessionId,
-                        errorType: 'apology',
-                        apiKey: apiKey
-                    }),
+                        model: 'gpt-4',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            ...messages
+                        ],
+                        temperature: temperature,
+                        max_tokens: 500
+                    })
                 });
 
-                const data = await response.json();
-                removeTypingIndicator();
+                if (!response.ok) {
+                    throw new Error('API request failed. Check your API key.');
+                }
 
-                addMessage(data.response, 'assistant');
+                const data = await response.json();
+                const aiResponse = data.choices[0].message.content;
+                
+                messages.push({ role: 'assistant', content: aiResponse });
+                removeTypingIndicator();
+                addMessage(aiResponse, 'assistant');
+
             } catch (error) {
                 removeTypingIndicator();
-                addMessage('Connection error. Please make sure the server is running.', 'assistant');
+                addMessage('Error: ' + error.message + '. Please check your API key and try again.', 'assistant');
             }
 
             sendBtn.disabled = false;

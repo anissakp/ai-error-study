@@ -53,7 +53,4 @@ Then open your browser and go to: `http://localhost:3000`
 ### 4. Use the Chatbot
 
 1. On the homepage, select a chatbot version (a, b, or c)
-- chatbot a: actionable error variant
-- chatbot b: apology error variant
-- chatbot c: defensive error variant
 2. Start chatting!

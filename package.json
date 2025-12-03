@@ -1,7 +1,7 @@
 {
-  "name": "ai-error-study",
+  "name": "ai-chatbot-study",
   "version": "1.0.0",
-  "description": "AI error message trust study chatbot with OpenAI",
+  "description": "AI Error Communication Study",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

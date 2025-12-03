@@ -2,8 +2,6 @@
 
 This project was completed as part of Carnegie Mellon University’s 05-618: Human-AI Interaction Course. The goal is to study how different AI error message types affect user trust and willingness to continue using AI chatbots as learning tools.
 
-Deployed at: https://anissakp.github.io/ai-error-study/
-
 ## Overview
 
 This project consists of three chatbot variants that demonstrate different error communication strategies:
@@ -41,7 +39,6 @@ Add your OpenAI API key to the `.env` file:
 ```
 OPENAI_API_KEY=sk-your-actual-openai-key-here
 PORT=3000
-
 ```
 
 ### 4. Start the Server
@@ -64,5 +61,4 @@ Then open your browser and go to: `http://localhost:3000`
 ├── index.html             # homepage with chatbot selection
 ├── chatbot-a.html         # actionable error variant
 ├── chatbot-b.html         # apology error variant
-├── chatbot-c.html         # defensive error variant
-└── README.md              # this file
+└── chatbot-c.html         # defensive error variant
